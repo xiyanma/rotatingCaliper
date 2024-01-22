@@ -51,8 +51,8 @@ export const rotatingCaliper = (hull: [number, number][]) => {
     vertices[minBox.index[1]].clone().sub(vertices[minBox.index[3]]),
     vertices[minBox.index[2]].clone().sub(vertices[minBox.index[0]]),
   ];
-  const width = normalU0.dot(diff[0]);
-  const height = normalU1.dot(diff[1]);
+  const width = Math.abs(normalU0.dot(diff[0]));
+  const height = Math.abs(normalU1.dot(diff[1]));
   const angle = Math.atan2(minBox.u[0].y, minBox.u[0].x);
 
   const vw = normalU0.clone().multiplyScalar(width * 0.5);
@@ -97,7 +97,13 @@ function sortAngles(angleInfo: AngleInfo[], angleNum: { value: number }): number
   }
   const sort = angleInfo.map((a, index) => index);
   sort.sort((a, b) => {
-    return angleInfo[a].sinThetaSqr - angleInfo[b].sinThetaSqr;
+    // 处理支持点重合的情况：若最小角度落在了重合的支持点上，要更新更逆时针的支持点，而不是第一个
+    if (angleNum.value < 4 && angleInfo[a].sinThetaSqr === angleInfo[b].sinThetaSqr) {
+      // 把 indexOfBox 更大的排在前面
+      return angleInfo[b].indexOfBox - angleInfo[a].indexOfBox;
+    } else {
+      return angleInfo[a].sinThetaSqr - angleInfo[b].sinThetaSqr;
+    }
   });
   return sort;
 }
